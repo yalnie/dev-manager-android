@@ -61,6 +61,9 @@ android {
             excludes += "META-INF/notice.txt"
             excludes += "META-INF/ASL2.0"
             excludes += "META-INF/*.kotlin_module"
+            excludes += "META-INF/versions/**"
+            excludes += "META-INF/OSGI-INF/**"
+            excludes += "META-INF/INDEX.LIST"
         }
     }
 }
