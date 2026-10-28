@@ -29,6 +29,9 @@ jobs:
 
       - name: Set up Android SDK & Accept Licenses
         run: |
+          # Ensure current user has write permissions to ANDROID_HOME
+          sudo chown -R $USER:$USER $ANDROID_HOME
+          
           SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
           if [ ! -f "$SDKMANAGER" ]; then
             SDKMANAGER="sdkmanager"
@@ -37,21 +40,34 @@ jobs:
           # Accept all licenses
           yes | $SDKMANAGER --licenses || true
 
-          # Try installing platform 37
+          # Install build-tools and platform-tools
+          $SDKMANAGER "build-tools;35.0.0" "platform-tools" || true
+
+          # Try installing platform 37 directly
           echo "Attempting to install platforms;android-37..."
-          if ! $SDKMANAGER "platforms;android-37" "build-tools;35.0.0" "platform-tools"; then
-            echo "platforms;android-37 not directly available; installing latest available platform..."
+          if ! $SDKMANAGER "platforms;android-37"; then
+            echo "platforms;android-37 not directly in remote index; installing latest available platform..."
             $SDKMANAGER "platforms;android-36" || $SDKMANAGER "platforms;android-35" || true
             
-            # If android-37 platform directory doesn't exist, create alias so compileSdk 37 compiles smoothly
+            # If android-37 platform directory doesn't exist, create alias with proper source.properties
             if [ ! -d "$ANDROID_HOME/platforms/android-37" ]; then
               LATEST_PLATFORM=$(ls -d $ANDROID_HOME/platforms/android-* 2>/dev/null | sort -V | tail -n 1)
               if [ -n "$LATEST_PLATFORM" ]; then
                 echo "Aliasing $LATEST_PLATFORM as android-37..."
                 cp -r "$LATEST_PLATFORM" "$ANDROID_HOME/platforms/android-37"
-                sed -i 's/ro.build.version.sdk=.*/ro.build.version.sdk=37/' "$ANDROID_HOME/platforms/android-37/source.properties" 2>/dev/null || true
+                if [ -f "$ANDROID_HOME/platforms/android-37/source.properties" ]; then
+                  sed -i 's/^AndroidVersion.ApiLevel=.*/AndroidVersion.ApiLevel=37/' "$ANDROID_HOME/platforms/android-37/source.properties"
+                  sed -i 's/^Platform.Version=.*/Platform.Version=37/' "$ANDROID_HOME/platforms/android-37/source.properties"
+                  sed -i 's/^Pkg.Desc=.*/Pkg.Desc=Android SDK Platform 37/' "$ANDROID_HOME/platforms/android-37/source.properties"
+                fi
               fi
             fi
+          fi
+
+          echo "Available platforms:"
+          ls -la $ANDROID_HOME/platforms/
+          if [ -f "$ANDROID_HOME/platforms/android-37/source.properties" ]; then
+            cat "$ANDROID_HOME/platforms/android-37/source.properties"
           fi
 
       - name: Grant Execute Permission to Gradlew
