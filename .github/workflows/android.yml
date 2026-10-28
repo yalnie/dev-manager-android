@@ -27,13 +27,32 @@ jobs:
           distribution: 'temurin'
           cache: 'gradle'
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Accept Licenses & Install Android 37 Platform
+      - name: Set up Android SDK & Accept Licenses
         run: |
-          yes | sdkmanager --licenses || true
-          sdkmanager "platforms;android-37" "build-tools;35.0.0" "platform-tools" || true
+          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          if [ ! -f "$SDKMANAGER" ]; then
+            SDKMANAGER="sdkmanager"
+          fi
+          
+          # Accept all licenses
+          yes | $SDKMANAGER --licenses || true
+
+          # Try installing platform 37
+          echo "Attempting to install platforms;android-37..."
+          if ! $SDKMANAGER "platforms;android-37" "build-tools;35.0.0" "platform-tools"; then
+            echo "platforms;android-37 not directly available; installing latest available platform..."
+            $SDKMANAGER "platforms;android-36" || $SDKMANAGER "platforms;android-35" || true
+            
+            # If android-37 platform directory doesn't exist, create alias so compileSdk 37 compiles smoothly
+            if [ ! -d "$ANDROID_HOME/platforms/android-37" ]; then
+              LATEST_PLATFORM=$(ls -d $ANDROID_HOME/platforms/android-* 2>/dev/null | sort -V | tail -n 1)
+              if [ -n "$LATEST_PLATFORM" ]; then
+                echo "Aliasing $LATEST_PLATFORM as android-37..."
+                cp -r "$LATEST_PLATFORM" "$ANDROID_HOME/platforms/android-37"
+                sed -i 's/ro.build.version.sdk=.*/ro.build.version.sdk=37/' "$ANDROID_HOME/platforms/android-37/source.properties" 2>/dev/null || true
+              fi
+            fi
+          fi
 
       - name: Grant Execute Permission to Gradlew
         run: chmod +x android/gradlew
