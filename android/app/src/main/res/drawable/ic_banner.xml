@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+	<item android:drawable="@drawable/ic_banner_background" />
+
+	<item
+		android:drawable="@drawable/ic_launcher_foreground"
+		android:left="23.77dp"
+		android:top="-48.49dp"
+		android:right="21.03dp"
+		android:bottom="-46.71dp" />
+
+</layer-list>
