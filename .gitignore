@@ -74,3 +74,7 @@ local.properties
 .secrets
 
 .claude/settings.local.json
+build-artifacts/
+android/.gradle/
+android/app/build/
+android/build/
