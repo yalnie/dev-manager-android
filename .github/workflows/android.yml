@@ -64,12 +64,22 @@ jobs:
               sed -i '/AndroidVersion.PreviewSdkInt/d' "$ANDROID_HOME/platforms/android-37/source.properties"
               sed -i '/AndroidVersion.BetaVersion/d' "$ANDROID_HOME/platforms/android-37/source.properties"
             fi
+
+            if [ -f "$ANDROID_HOME/platforms/android-37/package.xml" ]; then
+              sed -i 's/path="platforms;android-[^"]*"/path="platforms;android-37"/' "$ANDROID_HOME/platforms/android-37/package.xml"
+              sed -i 's/<api-level>[0-9]*<\/api-level>/<api-level>37<\/api-level>/g' "$ANDROID_HOME/platforms/android-37/package.xml"
+              sed -i 's/Android SDK Platform [0-9]*/Android SDK Platform 37/g' "$ANDROID_HOME/platforms/android-37/package.xml"
+            fi
           fi
 
           echo "Available platforms:"
           ls -la $ANDROID_HOME/platforms/
           echo "android-37 source.properties:"
           cat "$ANDROID_HOME/platforms/android-37/source.properties"
+          if [ -f "$ANDROID_HOME/platforms/android-37/package.xml" ]; then
+            echo "android-37 package.xml snippet:"
+            grep -C 3 "localPackage" "$ANDROID_HOME/platforms/android-37/package.xml" || true
+          fi
 
       - name: Grant Execute Permission to Gradlew
         run: chmod +x android/gradlew
